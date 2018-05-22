@@ -1,0 +1,45 @@
+---
+title: "Testing rmarkdown"
+author: "Jonathan Jimenez"
+date: "`r Sys.Date()`"
+output: 
+  html_document:
+    toc: yes
+    number_sections: yes
+---
+
+# Packages that are imported
+```{r importing packages, echo = FALSE}
+
+library(ggplot2)
+library(dplyr)
+source("infoCount.R")
+
+```
+# Import Data
+##  Shows data from movies
+```{r import data, echo = FALSE}
+
+```
+This is data from movie ratings
+
+It includes movie and date data. **Amount of movies**:
+and amount release in *2015* :
+
+the data recorded is for:
+
+* userId
+* movieId
+* rating
+
+# Random 
+##  More Random 
+
+More data taken from the **faithful** data set.
+
+This data set is a default data set that comes with R.
+```{r Random shit, echo = FALSE}
+  plot(faithful)
+  
+  print("printing within R code block")
+```

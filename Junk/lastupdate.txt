@@ -1,0 +1,3 @@
+243797 e9a09bbeeb84420d44e2cc564e81ae59 http://data.gdeltproject.org/gdeltv2/20170713143000.export.CSV.zip
+443330 ebd3800660f33050f7365e874757632f http://data.gdeltproject.org/gdeltv2/20170713143000.mentions.CSV.zip
+15847591 67633670f14108300958e82522a556c2 http://data.gdeltproject.org/gdeltv2/20170713143000.gkg.csv.zip

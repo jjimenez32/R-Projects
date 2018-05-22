@@ -1,0 +1,138 @@
+---
+title: "Gdelt Data Analysis"
+date: "`r Sys.Date()`"
+output: 
+  html_document:
+    toc: yes
+    number_sections: yes
+    includes:
+      in_header: header.tex
+---
+
+```{r setup, include=FALSE}
+  library(ggplot2)
+  library(knitr)
+  library(dplyr)
+  library(mapproj)
+  library(scales)
+# The following code formats the gdelt .csv file into a more readable format using variables defined in the 
+# Gdelt 2.0 codebook. 
+# date <- Sys.Date()
+# date <- gsub("-","", date)
+# #url <- paste("http://data.gdeltproject.org/events/", ".export.CSV.zip", sep = date)
+# url <- "http://data.gdeltproject.org/events/20170718.export.CSV.zip"
+# 
+#     # download .zip file and unzip contents
+#     download.file(url, dest="dataset.zip", mode="wb") 
+#     unzip ("dataset.zip", exdir = "./")
+#     unlink("dataset.zip")
+# #csv <- paste(date, ".export.CSV", sep="")
+
+# info2 <- read.csv("20170718.export.CSV",sep = "\t",header = TRUE, as.is = TRUE, na.strings = "NA", col.names = c("GlobalEventID","Day","MonthYear","Year","FractionDate","Actor1Code",
+#                                                                                       "Actor1Name","Actor1CountryCode","Actor1KnownGroupCode","Actor1EthnicCode","Actor1Religion1Code","Actor1Religion2Code","Actor1Type1Code","Actor1Type2Code",
+#                                                                                       "Actor1Type3Code","Actor2Code","Actor2Name","Actor2CountryCode","Actor2KnownGroupCode","Actor2EthnicCode", "Actor2Religion1Code","Actor2Religion2Code","Actor2Type1Code",
+#                                                                                       "Actor2Type2Code","Actor2Type3Code","IsRootEvent","EventCode","EventBaseCode","EventRootCode","QuadClass","GoldsteinScale",
+#                                                                                       "NumMentions","NumSources","NumArticles","AvgTone","Actor1Geo_Type","Actor1Geo_Fullname","Actor1Geo_CountryCode","Actor1Geo_ADM1Code","Actor1Geo_Lat","Actor1Geo_Long","Actor1Geo_FeatureID","Actor2Geo_Type","Actor2Geo_Fullname","Actor2Geo_CountryCode",
+#                                                                                       "Actor2Geo_AMD1Code","Actor2Geo_Lat","Actor2Geo_Long","Actor2Geo_FeatureID","ActionGeo_Type","ActionGeo_Fullname",
+#                                                                                       "ActionGeo_CountryCode","ActionGeo_AMD1Code","ActionGeo_Lat","ActionGeo_Long","ActionGeo_FeatureID","Dateadded","Sourceurl") )
+# 
+# 
+# 
+# info2$X <- seq.int(nrow(info2))
+# info2 <- info2[,c("X", setdiff(names(info2), "X"))]
+# 
+# 
+# sa2 <- c("GT","SV","GP","PA","PR","GY","CO","EC","PY","SR","UY","VE","PE","SR","GF","FK","CL", "BR", "AR", "CU","CR","BB","BS","AW","AI","HN")
+# ca2 <- dplyr::filter(info2, ActionGeo_CountryCode %in% sa2)
+
+
+info2 <- read.csv("20170719141500.export.CSV",sep = "\t",header = TRUE, as.is = TRUE, na.strings = "NA", col.names = c("GlobalEventID","Day","MonthYear","Year","FractionDate","Actor1Code",
+                                                                                      "Actor1Name","Actor1CountryCode","Actor1KnownGroupCode","Actor1EthnicCode","Actor1Religion1Code","Actor1Religion2Code","Actor1Type1Code","Actor1Type2Code",
+                                                                                      "Actor1Type3Code","Actor2Code","Actor2Name","Actor2CountryCode","Actor2KnownGroupCode","Actor2EthnicCode", "Actor2Religion1Code","Actor2Religion2Code","Actor2Type1Code",
+                                                                                      "Actor2Type2Code","Actor2Type3Code","IsRootEvent","EventCode","EventBaseCode","EventRootCode","QuadClass","GoldsteinScale",
+                                                                                      "NumMentions","NumSources","NumArticles","AvgTone","Actor1Geo_Type","Actor1Geo_Fullname","Actor1Geo_CountryCode","Actor1Geo_ADM1Code","Actor1Geo_ADM2Code","Actor1Geo_Lat","Actor1Geo_Long","Actor1Geo_FeatureID","Actor2Geo_Type","Actor2Geo_Fullname","Actor2Geo_CountryCode",
+                                                                                      "Actor2Geo_AMD1Code","Actor2Geo_AMD2Code","Actor2Geo_Lat","Actor2Geo_Long","Actor2Geo_FeatureID","ActionGeo_Type","ActionGeo_Fullname",
+                                                                                      "ActionGeo_CountryCode","ActionGeo_AMD1Code","ActionGeo_AMD2Code","ActionGeo_Lat","ActionGeo_Long","ActionGeo_FeatureID","Dateadded","Sourceurl") )
+
+
+
+info2$X <- seq.int(nrow(info2))
+info2 <- info2[,c("X", setdiff(names(info2), "X"))]
+
+
+sa2 <- c("GT","SV","GP","PA","PR","GY","CO","EC","PY","SR","UY","VE","PE","SR","GF","FK","CL", "BR", "AR", "CU","CR","BB","BS","AW","AI","HN")
+ca2 <- dplyr::filter(info2, ActionGeo_CountryCode %in% sa2)
+
+
+```
+
+# Quad Class
+
+**QuadClass** : (integer) The entire CAMEO event taxonomy is ultimately organized under four primary classifications: Verbal Cooperation, Material Cooperation, Verbal Conflict, and Material Conflict. This field specifies this primary classification for the event type, allowing analysis at the highest level of aggregation. The numeric codes in this field map to the Quad Classes as follows: 1=Verbal Cooperation, 2=Material Cooperation, 3=Verbal Conflict, 4=Material Conflict.
+
+```{r quadSetup, echo = FALSE}
+  quad <- info2
+  for(i in 0:nrow(quad)){
+    if (4 %in% quad$QuadClass[i]){
+      quad$QuadClass[i] <- "4 Material Conflict"
+    } else if (3 %in% quad$QuadClass[i]){
+      quad$QuadClass[i] <- "3 Verbal Conflict"
+    } else if (2 %in% quad$QuadClass[i]){
+      quad$QuadClass[i] <- "2 Material Cooperation"
+    } else if (1 %in% quad$QuadClass[i]){
+      quad$QuadClass[i] <- "1 Verbal Cooperation"
+   }
+  }
+
+```
+
+## Quad Class Bar Graph
+
+```{r bargraph, echo = FALSE}
+
+  ggplot(data = quad, aes( x = QuadClass)) + geom_bar(fill = "lightblue", color= "darkblue", width = .5) + 
+  xlab("Quad Class of the Events") + 
+  theme(axis.title.y = element_blank()) + ggtitle("Number of Events by Quad Class")
+  
+```
+
+<a href="#top">Back to top</a>
+
+## Quad Class Article Tone
+
+
+```{r articletone, echo = FALSE}
+  
+  quadTone <- summarise (group_by(quad, QuadClass) , meanTone =   mean(AvgTone))
+  ggplot(quadTone, aes(x = QuadClass, y = meanTone)) +  
+  geom_bar(stat = "identity", width = .5) +
+  xlab("Quad Class of the Events")
+```
+  
+<a href="#top">Back to top</a>
+
+# Event Code
+
+
+**EventBaseCode**: (string) CAMEO event codes are defined in a three-level taxonomy. For events at level three in the taxonomy, this yields its level two leaf root node. For example, code “0251” (“Appeal for easing of administrative sanctions”) would yield an EventBaseCode of “025” (“Appeal to yield”). This makes it possible to aggregate events at various resolutions of specificity. For events at levels two or one, this field will be set to EventCode. NOTE: it is strongly recommended that this field be stored as a string instead of an integer, since the CAMEO taxonomy can include zero-leaded event codes that can make distinguishing between certain event types more difficult when stored as an integer.
+
+## Event Code Bar Graph
+```{r EventRoot, echo = FALSE}
+  info2$EventBaseCode <- as.factor(info2$EventRootCode)
+
+  ggplot(info2, aes(x = EventBaseCode)) +
+  geom_bar(fill = "blue", colour = "black", width = .5) +
+  theme(axis.text.x = element_text(angle = 90, hjust = .5, vjust = .5)) +
+  xlab("Event Code") +
+  theme(axis.title.y = element_blank())+
+  ggtitle("Number of Events by Event Code ")
+  
+```
+
+
+## New 
+```{r new, echo = FALSE}
+  
+```
+
+<a href="#top">Back to top</a>

@@ -1,0 +1,112 @@
+---
+title: "Test"
+runtime: shiny
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: rows
+    theme: paper
+    vertical_layout: scroll
+---
+
+
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+library(tibble)
+library(ggplot2)
+library(tidyr)
+library(dplyr)
+library(tibble)
+library(purrr)
+library(readr)
+library(tm)
+rand <- ""
+for(i in 1:10){
+  rand[i] <- c(paste("MM/DD/YYYY ",i, sep= ""))
+}
+```
+
+
+
+
+Basic 
+===================================== 
+
+Inputs_basic {.sidebar}
+-------------------------------------
+
+```{r io_processes}
+ shinyUI(fluidPage(
+ selectInput("Dat", label = "Date",
+             choices = c(rand[1:10]), selected = rand[0]),
+ textInput("txt", "find" ,0),
+ actionButton("submit", "Submit"),
+ textOutput("text")))
+ 
+ shinyServer(function(input,output){
+   
+   values <- reactiveValues(text = NA)
+   observe({
+     if(input$submit > 0){
+       values$txt <- isolate(input$txt)
+     }
+   })
+   output$text <-renderText({values$txt})
+ })
+ 
+```
+
+Rows {data-height=500}
+-------------------------------------
+
+
+### **DMH#1**
+
+```{r show_scattr}
+  dat <- reactive( {
+  as.tibble(mtcars) %>%
+    select(mpg, cyl) %>%
+    filter(mpg > input$mpg_thres & cyl > input$cyl_thres)
+} )
+
+mainPanel(
+  renderPlot( {
+     ggplot(dat(), aes(mpg, cyl)) + 
+       geom_point()
+  })
+)
+```
+
+Rows {data-height = 500}
+-------------------------------------------
+###  **DMH#2**
+```{r show_verbatim, echo = FALSE}
+shinyUI(fluidPage(
+mainPanel(
+  textOutput("txt")
+#  renderPrint( {
+#     dat()
+#  })
+)
+))
+
+shinyServer(function(input,output){
+  output$txt <-renderText("hello world")
+}
+)
+
+```
+
+Stuff
+============================
+
+
+Inputs_basic{.sidebar}
+-----------------------------
+###Stuff goes here
+
+Rows{data-height = 300}
+-----------------------------
+###Randum
+
+I will display the list of strings: `r rand`

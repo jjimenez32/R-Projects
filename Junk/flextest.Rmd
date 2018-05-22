@@ -1,0 +1,39 @@
+---
+title: "Untitled"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: columns
+    vertical_layout: scroll
+---
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+
+```
+
+Row
+-----------------------------------------------------------------------
+
+### Chart A
+
+```{r}
+  info <- read.table("rating2.csv", sep = ",", strip.white = TRUE, header = TRUE)
+  head(info)
+  str(info)
+```
+
+Column {data-width=350}
+-----------------------------------------------------------------------
+
+### Chart B
+
+```{r}
+  plot(faithful)
+```
+
+### Chart C
+
+```{r}
+  print("some shit goes here")
+  info[1:20,2]
+```

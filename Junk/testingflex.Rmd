@@ -1,0 +1,93 @@
+---
+title: "Untitled"
+runtime: shiny
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: columns
+    vertical_layout: fill
+---
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+library(shiny)
+library(dplyr)
+
+# download.file("https://data.gdeltproject.org/gdeltv2/lastupdate.txt", destfile = "lastupdate.txt")
+lastUpdate <- read.table("lastupdate.txt", as.is = TRUE)
+# download.file("",destfile = "gdelt.export.csv")
+ data <- read.csv("20170713123000.export.CSV", as.is = TRUE,header = TRUE, col.names = 
+c("GlobalEventID","Day","MonthYear","Year","FractionDate","Actor1Code",
+                                                                                     "Actor1Name","Actor1CountryCode","Actor1KnownGroupCode","Actor1EthnicCode","Actor1Religion1Code","Actor1Religion2Code","Actor1Type1Code","Actor1Type2Code",
+                                                                                      "Actor1Type3Code","Actor2Code","Actor2Name","Actor2CountryCode","Actor2KnownGroupCode","Actor2EthnicCode", "Actor2Religion1Code","Actor2Religion2Code","Actor2Type1Code",
+                                                                                     "Actor2Type2Code","Actor2Type3Code","IsRootEvent","EventCode","EventBaseCode","EventRootCode","QuadClass","GoldsteinScale",
+                                                                                      "NumMentions","NumSources","NumArticles","AvgTone","Actor1Geo_Type","Actor1Geo_Fullname","Actor1Geo_CountryCode","Actor1Geo_ADM1Code","Actor1Geo_ADM2Code","Actor1Geo_Lat","Actor1Geo_Long","Actor1Geo_FeatureID","Actor2Geo_Type","Actor2Geo_Fullname","Actor2Geo_CountryCode",
+                                                                                      "Actor2Geo_AMD1Code","Actor2Geo_AMD2Code","Actor2Geo_Lat","Actor2Geo_Long","Actor2Geo_FeatureID","ActionGeo_Type","ActionGeo_Fullname",
+                                                                                      "ActionGeo_CountryCode","ActionGeo_AMD1Code","ActionGeo_AMD2Code","ActionGeo_Lat","ActionGeo_Long","ActionGeo_FeatureID","Dateadded","Sourceurl"), sep = '\t')
+
+data$X <- seq.int(nrow(data))
+data <- data[,c("X", setdiff(names(data), "X"))]
+
+
+
+
+```
+
+Column {data-width=650}
+-----------------------------------------------------------------------
+
+### Chart A
+
+```{r testing, echo = FALSE}
+library(shiny)  
+textInput("gdelt", "Gdelt")
+  actionButton("submit", "Submit")
+  actionButton("Dim", "Display Dimensions")
+  actionButton ("Rows", "Display Rows")
+  actionButton("Column", "Display Columns")
+#  numericInput("n", "n", 50)
+  
+  textOutput("Dim")
+  textOutput("Column")
+
+  
+  dimVals <- eventReactive(input$Dim,{ 
+      dim(data)
+  })
+  
+  output$Dim <- renderText({dimVals()})
+
+  
+  colVals <- eventReactive(input$Column,{
+    paste(ncol(data))
+  })
+  
+  output$Column <- renderText({colVals()})
+
+  
+  
+  
+```
+
+Column {data-width=350}
+-----------------------------------------------------------------------
+
+### Chart B
+
+```{r}  
+
+textOutput("Rows")
+
+rowVals <- eventReactive(input$Rows,{
+    paste(nrow(data))
+  })
+  
+  output$Rows <- renderText({rowVals()})
+
+```
+
+### Chart C
+
+```{r}
+
+```
+

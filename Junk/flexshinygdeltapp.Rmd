@@ -1,0 +1,426 @@
+---
+title: "470th"
+output: 
+  flexdashboard::flex_dashboard:
+    storyboard: true
+    theme: spacelab
+    includes: 
+      in_header: logo.html
+runtime: shiny
+---
+
+
+```{r setup, include=FALSE}
+  start <- Sys.time()
+
+
+library(flexdashboard)
+library(shiny)
+library(leaflet)
+library(RColorBrewer)
+library(ggplot2)
+require(dplyr)
+library(gtools)
+library(urltools)
+require(article)
+# source("articletest.R")
+options(warn= -1)
+
+# url <- "http://data.gdeltproject.org/events/20170731.export.CSV.zip"
+# download.file(url, dest="dataset.zip", mode="wb")
+# unzip ("dataset.zip", exdir = "./")
+# unlink("dataset.zip")
+
+# url <- "http://data.gdeltproject.org/gdeltv2/20170801153000.export.CSV.zip"
+# download.file(url, dest="dataset.zip", mode="wb")
+# unzip ("dataset.zip", exdir = "./")
+# unlink("dataset.zip")
+
+# gdelt1 <- read.csv("20170731.export.CSV", sep = "\t", header = TRUE, as.is = TRUE, na.strings = NA)
+
+
+  gdelt1 <- read.csv("20170801153000.export.CSV",sep = "\t",header = TRUE, as.is = FALSE, na.strings = "NA", col.names = c("GlobalEventID","Day","MonthYear","Year","FractionDate","Actor1Code",
+                                                                                "Actor1Name","Actor1CountryCode","Actor1KnownGroupCode","Actor1EthnicCode","Actor1Religion1Code","Actor1Religion2Code","Actor1Type1Code","Actor1Type2Code",
+                                                                                      "Actor1Type3Code","Actor2Code","Actor2Name","Actor2CountryCode","Actor2KnownGroupCode","Actor2EthnicCode", "Actor2Religion1Code","Actor2Religion2Code","Actor2Type1Code",
+                                                                                      "Actor2Type2Code","Actor2Type3Code","IsRootEvent","EventCode","EventBaseCode","EventRootCode","QuadClass","GoldsteinScale",
+                                                                                      "NumMentions","NumSources","NumArticles","AvgTone","Actor1Geo_Type","Actor1Geo_Fullname","Actor1Geo_CountryCode","Actor1Geo_ADM1Code","Actor1Geo_ADM2Code","Actor1Geo_Lat","Actor1Geo_Long","Actor1Geo_FeatureID","Actor2Geo_Type","Actor2Geo_Fullname","Actor2Geo_CountryCode",
+                                                                                      "Actor2Geo_AMD1Code","Actor2Geo_AMD2Code","Actor2Geo_Lat","Actor2Geo_Long","Actor2Geo_FeatureID","ActionGeo_Type","ActionGeo_Fullname",
+                                                                                      "ActionGeo_CountryCode","ActionGeo_AMD1Code","ActionGeo_AMD2Code","ActionGeo_Lat","ActionGeo_Long","ActionGeo_FeatureID","Dateadded","Sourceurl") )
+
+
+
+# gdelt1 <- read.csv("20170718.export.CSV",sep = "\t",header = TRUE, as.is = TRUE, na.strings = "NA", col.names = c("GlobalEventID","Day","MonthYear","Year","FractionDate","Actor1Code",
+#                                                                                       "Actor1Name","Actor1CountryCode","Actor1KnownGroupCode","Actor1EthnicCode","Actor1Religion1Code","Actor1Religion2Code","Actor1Type1Code","Actor1Type2Code",
+#                                                                                       "Actor1Type3Code","Actor2Code","Actor2Name","Actor2CountryCode","Actor2KnownGroupCode","Actor2EthnicCode", "Actor2Religion1Code","Actor2Religion2Code","Actor2Type1Code",
+#                                                                                       "Actor2Type2Code","Actor2Type3Code","IsRootEvent","EventCode","EventBaseCode","EventRootCode","QuadClass","GoldsteinScale",
+#                                                                                       "NumMentions","NumSources","NumArticles","AvgTone","Actor1Geo_Type","Actor1Geo_Fullname","Actor1Geo_CountryCode","Actor1Geo_ADM1Code","Actor1Geo_Lat","Actor1Geo_Long","Actor1Geo_FeatureID","Actor2Geo_Type","Actor2Geo_Fullname","Actor2Geo_CountryCode",
+#                                                                                       "Actor2Geo_AMD1Code","Actor2Geo_Lat","Actor2Geo_Long","Actor2Geo_FeatureID","ActionGeo_Type","ActionGeo_Fullname",
+#                                                                                       "ActionGeo_CountryCode","ActionGeo_AMD1Code","ActionGeo_Lat","ActionGeo_Long","ActionGeo_FeatureID","Dateadded","Sourceurl") )
+
+
+
+gdelt1$X <- seq.int(nrow(gdelt1))
+gdelt1 <- gdelt1[,c("X", setdiff(names(gdelt1), "X"))]
+
+
+sa2 <- c("GT","SV","GP","PA","PR","GY","CO","EC","PY","SR","UY","VE","PE","SR","GF","FK","CL", "BR", "AR", "CU","CR","BB","BS","AW","AI","HN")
+ca2 <- dplyr::filter(gdelt1, ActionGeo_CountryCode %in% sa2)
+
+Ecode <- ca2
+Ecode <- Ecode[!duplicated(Ecode$Sourceurl),]
+
+
+
+```
+
+
+MAP
+=================================================================
+
+```{r gdelt map, echo = FALSE}
+
+# source("~/articletest.R")
+
+uniqueArticles <- unique(Ecode$Sourceurl)
+articles <- get_article(uniqueArticles)
+Ecode <- left_join(Ecode, articles, by = c("Sourceurl" = "url"))
+                                           # = "url"))
+
+  for(i in 0:nrow(ca2)){
+    if (1 %in% ca2$EventRootCode[i]){
+      ca2$EventRootCode[i] <- "1 MAKE PUBLIC STATEMENT"
+    } else if (2 %in% ca2$EventRootCode[i]){
+      ca2$EventRootCode[i] <- "2 APPEAL"
+    } else if (3 %in% ca2$EventRootCode[i]){
+      ca2$EventRootCode[i] <- "3 EXPRESS INTEN TO COOPERATE"
+    } else if (4 %in% ca2$EventRootCode[i]){
+      ca2$EventRootCode[i] <- "4 CONSULT"
+    } else if (5 %in% ca2$EventRootCode[i]){
+      ca2$EventRootCode[i] <- "5 ENGAGE IN DIPLOMATIC OPERATION"
+    } else if (6 %in% ca2$EventRootCode[i]){
+      ca2$EventRootCode[i] <- "6 ENGAGE IN MATERIAL COOPERATION"
+    } else if (7 %in% ca2$EventRootCode[i]){
+      ca2$EventRootCode[i] <- "7 PROVIDE AID"
+    } else if (8 %in% ca2$EventRootCode[i]){
+      ca2$EventRootCode[i] <- "8 YIELD"
+    } else if (9 %in% ca2$EventRootCode[i]){
+      ca2$EventRootCode[i] <- "9 INVESTIGATE"
+    } else if (10 %in% ca2$EventRootCode[i]){
+      ca2$EventRootCode[i] <- "10 DEMAND"
+    } else if (11 %in% ca2$EventRootCode[i]){
+      ca2$EventRootCode[i] <- "11 DISAPPROVE"
+    } else if (12 %in% ca2$EventRootCode[i]){
+      ca2$EventRootCode[i] <- "12 REJECT"
+    } else if (13 %in% ca2$EventRootCode[i]){
+      ca2$EventRootCode[i] <- "13 THREATEN"
+    } else if (14 %in% ca2$EventRootCode[i]){
+      ca2$EventRootCode[i] <- "14 PROTEST"
+    } else if (15 %in% ca2$EventRootCode[i]){
+      ca2$EventRootCode[i] <- "15 EXHIBIT FORCE POSTURE"
+    } else if (16 %in% ca2$EventRootCode[i]){
+      ca2$EventRootCode[i] <- "16 REDUCE RELATIONS"
+    } else if (17 %in% ca2$EventRootCode[i]){
+      ca2$EventRootCode[i] <- "17 COERCE"
+    } else if (18 %in% ca2$EventRootCode[i]){
+      ca2$EventRootCode[i] <- "18 ASSAULT"
+    } else if (19 %in% ca2$EventRootCode[i]){
+      ca2$EventRootCode[i] <- "19 FIGHT"
+    }
+}
+
+
+ui <- bootstrapPage(
+  tags$style(type = "text/css", "html, body {width:100%;height:100%}"),
+  leafletOutput("map", width = "100%", height = "100%"),
+  absolutePanel(top =10, right = 10, 
+                selectInput("ecode", strong("Event Code"), c("All", unique(as.character(mixedsort(ca2$EventRootCode))))),
+                selectInput("country", strong("Country"), c("All", unique(as.character(ca2$ActionGeo_CountryCode))))
+))
+
+
+
+
+
+server <- function(input, output, session){
+  eventInput <- eventReactive( input$submit, {
+    input$caption
+  })
+  
+  
+  output$map <- renderLeaflet({
+    if (input$ecode == "All"){
+      Ecode <- ca2
+    }else{
+    Ecode <- subset(ca2, EventRootCode == input$ecode)
+    }    
+    Ecode <- left_join(ca2, articles, by = c("Sourceurl" = "url"))
+    Ecode <- Ecode[!duplicated(Ecode$Sourceurl),]
+
+    content <- paste(sep = "",
+                 "<b>Title: </b>",
+                 Ecode$title, "<br/>",
+                 "<b>Summary: </b>", "<br/>",
+                 Ecode$text , "<br/>",
+                 "<b>URL: </b>", "<br/>",
+                 Ecode$Sourceurl, "<br/> ")
+    leaflet(Ecode) %>%
+        setView(lng = -60.2333, lat =-15.9000 , zoom = 3)
+  })
+  
+  observe({
+    if (input$ecode == "All"){
+      Ecode <- ca2
+    }else{
+      Ecode <- subset(ca2, EventRootCode == input$ecode)
+    }
+    Ecode <- left_join(Ecode, articles, by = c("Sourceurl" = "url"))
+    Ecode <- Ecode[!duplicated(Ecode$Sourceurl),]
+    content <- paste(sep = "",
+                 "<b>Title: </b>",
+                 Ecode$title, "<br/>",
+                 "<b>Summary: </b>", "<br/>",
+                 Ecode$text , "<br/>",
+                 "<b>URL: </b>", "<br/>",
+                 Ecode$Sourceurl," <br/>")
+
+    leafletProxy("map", data = Ecode) %>%
+                   addTiles() %>%
+                   addCircleMarkers(~jitter(ActionGeo_Long), ~jitter(ActionGeo_Lat),radius = 2 ,
+                                    fillOpacity = 0.7,
+                                    popup = content,
+                                    popupOptions = list(minWidth = 300,maxHeight = 300))
+  })
+
+  
+}
+
+
+shinyApp(ui, server)
+```
+
+RAW DATA
+===============================================================
+
+```{r gdelt data table, echo = FALSE}
+
+ui <- fluidPage(
+  titlePanel("DataTable"),
+  #   fluidRow(
+  #   column(4,
+  #          selectInput("man",
+  #                      strong("Manufacture:"),
+  #                      c("All",
+  #                        unique(as.character(mpg$manufacturer))))
+  #   ),
+  #   column(4,
+  #          selectInput("trans", 
+  #                      strong("Transmission:") ,
+  #                      c("All",
+  #                        unique(as.character(mpg$trans))))
+  #   ),
+  #   column(4,
+  #          selectInput("cyl",
+  #                      strong("Cylinders:"),
+  #                      c("All",
+  #                        unique(as.character(mpg$cyl))))
+  #   )
+  # ),
+  fluidRow(
+    DT:: dataTableOutput("table")
+  )
+)
+
+server <- function(input, output){
+  
+  output$table <- DT:: renderDataTable(DT:: datatable({
+    data <- ca2
+    # if(input$man != "All"){
+    #   data <- data[data$manufacturer == input$man,]
+    # }
+  }))
+}
+
+shinyApp(ui, server)
+```
+
+
+
+STATISTICAL DATA{.storyboard }
+===================================================
+
+
+### Quad Class Analysis
+
+```{r gdelt statistics, echo = FALSE}
+quad <- gdelt1
+  for(i in 0:nrow(quad)){
+    if (4 %in% quad$QuadClass[i]){
+      quad$QuadClass[i] <- "4 Material Conflict"
+    } else if (3 %in% quad$QuadClass[i]){
+      quad$QuadClass[i] <- "3 Verbal Conflict"
+    } else if (2 %in% quad$QuadClass[i]){
+      quad$QuadClass[i] <- "2 Material Cooperation"
+    } else if (1 %in% quad$QuadClass[i]){
+      quad$QuadClass[i] <- "1 Verbal Cooperation"
+   }
+  }
+
+  ggplot(data = quad, aes( x = QuadClass)) + geom_bar(fill = "lightblue", color= "darkblue", width = .5) + 
+  xlab("Quad Class of the Events") + 
+  theme(axis.title.y = element_blank()) + ggtitle("Number of Events by Quad Class")
+  
+
+
+
+```
+
+
+
+***
+
+**QuadClass** : The entire CAMEO event taxonomy is ultimately organized under four primary classifications: Verbal Cooperation, Material Cooperation, Verbal Conflict, and Material Conflict. This field specifies this primary classification for the event type, allowing analysis at the highest level of aggregation. The numeric codes in this field map to the Quad Classes as follows: 1=Verbal Cooperation, 2=Material Cooperation, 3=Verbal Conflict, 4=Material Conflict.
+
+### Quad Class Article Tone
+
+```{r, echo = FALSE}
+
+  quadTone <- summarise (group_by(quad, QuadClass) , meanTone =   mean(AvgTone))
+  ggplot(quadTone, aes(x = QuadClass, y = meanTone)) +  
+  geom_bar(stat = "identity", width = .5) +
+  xlab("Quad Class of the Events")
+```
+
+***
+
+**AvgTone** : This is the average “tone” of all documents containing one or morementions of  this  eventduring  the  15  minute  up date  in  which  it  was  first  seen.The  score ranges  from -100  (extremely  negative)  to  +100  (extremely positive).Common  values range between -10  and  +10,  with  0  indicating  neutral.    This  can be  used  as  a  method  of  filtering  the “context” of events as a subtle  measure  of  the  importance  of  an  event  and  as  a  proxy  for the “impact” of that event.  For example, a riot event with a slightly negative average tone is likely to  have  been  a  minor  occurrence,  whereas  if  it  had  an  extremely  negative  average  tone,  it suggests a far more serious occurrence.  A riot with a positive score likely suggests a very minor occurrence  described in the context of a more  positive  narrative  (such as a report of an attack occurring  in  a  discussion  of  improving  conditions  on  the  ground in  a  country  and how  the number  of  attacks  per  day  has  been  greatly  reduced).NOTE: this  field  refers  only  to  the  first news report to mention an event and is not updated if the event is found in a different context in other news reports.  It is included for legacy purposes –for more precise information on the positioning  of  an  event,  see  the  Mentions  table.NOTE:this  provides  only  a  basic  tonal assessment of an article and it is recommended that users interested in emotional measures use the Mentions and Global Knowledge Graph tables to merge the complete set of 2,300 emotions and themes from the GKG GCAM system into their analysis of event records.
+
+  
+### Event Root Code Analysis
+
+```{r , echo =FALSE}
+gdelt1$EventBaseCode <- as.factor(gdelt1$EventBaseCode)
+
+  ggplot(gdelt1, aes(x = EventRootCode)) +
+  geom_bar(fill = "blue", colour = "black", width = .5) +
+  theme(axis.text.x = element_text(angle = 90, hjust = .5, vjust = .5)) +
+  xlab("Event Code") +
+  theme(axis.title.y = element_blank())+
+  ggtitle("Number of Events by Event Code ")
+
+```
+
+
+***
+
+**EventRootCode**: CAMEO event codes are defined in a three-level taxonomy. For events at level three in the taxonomy, this yields its level two leaf root node. For example, code “0251” (“Appeal for easing of administrative sanctions”) would yield an EventBaseCode of “025” (“Appeal to yield”). This makes it possible to aggregate events at various resolutions of specificity. For events at levels two or one, this field will be set to EventCode. NOTE: it is strongly recommended that this field be stored as a string instead of an integer, since the CAMEO taxonomy can include zero-leaded event codes that can make distinguishing between certain event types more difficult when stored as an integer.
+
+* 01	MAKE PUBLIC STATEMENT
+* 02	APPEAL
+* 03	EXPRESS INTENT TO COOPERATE
+* 04	CONSULT
+* 05	ENGAGE IN DIPLOMATIC COOPERATION
+* 06	ENGAGE IN MATERIAL COOPERATION
+* 07	PROVIDE AID
+* 08	YIELD
+* 09	INVESTIGATE
+* 10	DEMAND
+* 11	DISAPPROVE
+* 12	REJECT
+* 13	THREATEN
+* 14	PROTEST
+* 15	EXHIBIT FORCE POSTURE
+* 16	REDUCE RELATIONS
+* 17	COERCE
+* 18	ASSAULT
+* 19	FIGHT
+
+***
+
+### Country Code
+
+
+```{r ActionGeo_CountryCode, echo = FALSE}
+stat <- ca2
+  stat$ActionGeo_CountryCode <- as.factor(stat$ActionGeo_CountryCode)
+
+  ggplot(stat, aes(x = ActionGeo_CountryCode)) +
+  geom_bar(fill = "blue", colour = "black", width = .5) +
+  theme(axis.text.x = element_text(angle = 90, hjust = .5, vjust = .5)) +
+  xlab("Country Code") +
+  theme(axis.title.y = element_blank()) +
+  ggtitle("Number of Events by Country Code ")
+
+
+```
+
+***
+
+**Country Code**: (string) This is the 2-character FIPS10-4 country code for the location.
+
+### Number of Mentions, Total and Per Article
+
+
+```{r NumMentions, echo = FALSE}
+  stat$NumMentions <- as.factor(stat$NumMentions)
+
+  ggplot(stat, aes(x = NumMentions)) +
+  geom_bar(fill = "blue", colour = "black", width = .5) +
+  theme(axis.text.x = element_text(angle = 90, hjust = .5, vjust = .5)) +
+  xlab("Number of Mentions") +
+  theme(axis.title.y = element_blank()) +
+  ggtitle("Number of Mentions")
+
+```
+
+***
+
+**Number of Mentions**:(integer) This is the total number of mentions of this event across all source documents during the 15 minute update in which it was first seen. Multiple references to an event within a single document also contribute to this count. This can be used as a method of assessing the “importance” of an event: the more discussion of that event, the more likely it is to be significant. The total universe of source documents and the density of events within them vary over time, so it is recommended that this field be normalized by the average or other measure of the universe of events during the time period of interest. This field is actually a composite score of the total number of raw mentions and the number of mentions extracted from reprocessed versions of each article (see the discussion for the Mentions table). NOTE: this field refers only to the first news report to mention an event and is not updated if the event is found in a different context in other news reports.
+
+
+### Number of Articles Bar Graph
+
+```{r NumArticles, echo = FALSE}
+  stat$NumArticles <- as.factor(stat$NumArticles)
+
+  ggplot(stat, aes(x = NumArticles)) +
+  geom_bar(fill = "blue", colour = "black", width = .5) +
+  theme(axis.text.x = element_text(angle = 90, hjust = .5, vjust = .5)) +
+  xlab("Number of Articles") +
+  theme(axis.title.y = element_blank()) +
+  ggtitle("Number of Articles")
+
+```
+
+***
+
+
+**Number of Articles**: (integer) This is the total number of source documents containing one or more mentions of this event during the 15 minute update in which it was first seen. This can be used as a method of assessing the “importance” of an event: the more discussion of that event, the more likely it is to be significant. The total universe of source documents varies over time, so it is recommended that this field be normalized by the average or other measure of the universe of events during the time period of interest. NOTE: this field refers only to the first news report to mention an event and is not updated if the event is found in a different context in other news reports.
+
+
+### SourceURL Bar Graph
+
+```{r Sourceurl, echo = FALSE}
+  stat$Sourceurl <- as.factor(stat$Sourceurl)
+  stat$Sourceurl <- urltools::domain(stat$Sourceurl)
+  ggplot(stat, aes(x = Sourceurl)) +
+  geom_bar(fill = "blue", colour = "black", width = .5) +
+  theme(axis.text.x = element_text(angle = 90, hjust = .5, vjust = .5)) +
+  xlab("SourceURL") +
+  theme(axis.title.y = element_blank()) +
+  ggtitle("SourceURL")
+```
+
+***
+
+**SourceURL**: (string) This field records the URL or citation of the first news report it found this event in. In most cases this is the first report it saw the article in, but due to the timing and flow of news reports through the processing pipeline, this may not always be the very first report, but is at least in the first few reports.
+
+
+
+```{r running time, echo = FALSE}
+
+  ends <- Sys.time()
+  final_time <- ends - start
+  print(final_time)
+
+```
+

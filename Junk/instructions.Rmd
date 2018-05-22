@@ -1,0 +1,64 @@
+---
+title: "GDELT Application Instructions"
+date: "By Jonathan Jimenez"
+output: 
+  pdf_document:
+    toc: yes
+    number_sections: yes
+    includes:
+      in_header: header.tex
+---
+
+
+# Setup
+1. Go to: http://ec2-54-82-142-214.compute-1.amazonaws.com/
+
+* Enter Username: os184462 <br>
+* Enter Password: ZxRTaeqJ
+
+ \includegraphics{/home/os184462/Junk/2017-08-08 20_19_35-RStudio.png}
+ 
+2. Click on the GDELTapp folder
+ 
+ \includegraphics{/home/os184462/Junk/2017-08-08 20_21_57-RStudio.png}
+
+3. Click on GDELTapp.Rmd. This will show the code
+ 
+ \includegraphics{/home/os184462/Junk/2017-08-08 20_22_13-RStudio.png}
+
+4. Near the top left, click on "Knit". This will start the app. This app will first download the last 7 days work of GDELT files before it officially starts. If a file of the current day already exists, it will automatically read that it does and open that instead.
+
+
+
+# Application Details
+
+ \includegraphics{/home/os184462/Junk/2017-08-08 18_43_18-Mozilla Firefox.png}
+
+**Map**: this will show all articles located in cetral and south america. 
+
+* EventCode: Filter by type of event
+* Country: Filter by country
+* Action: *View* - Option to only show the URL of the articles. *Scrape* - Option to scrape the content of the articles.
+* Date: (not pictured) Filter by Date from the last week
+* Update: Button that will execute the filters set above
+
+This will also log all the chosen Scrape options into a Log folder. In here, every logged scrape will be saved into a .txt file
+
+**ERRORS AND PROBLEMS**: 
+
+* Trying to scrape when there are no visible plots will result in an error and crash. View before you Scrape.
+* You *can* scrape ALL articles available, but this will take a very long time and I would highly recommend against it.
+
+ \includegraphics{/home/os184462/Junk/2017-08-08 18_43_38-Mozilla Firefox.png}
+
+**DataTable**: This is the raw GDELT file of the last 7 days filtered to only include central and south america. You can set amount of entries and also search.
+
+ \includegraphics{/home/os184462/Junk/2017-08-08 18_44_04-Mozilla Firefox.png}
+
+**Statistical Data**: Charts that portray the GDELT statistically. Chart is shown an the left while the description is shown on the right.
+
+
+
+*To delete a file you don't want, simply click on the small box to the left of the file, then click on the delete button above*
+
+
