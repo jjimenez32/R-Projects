@@ -1,0 +1,404 @@
+---
+title: "470th"
+output: 
+  flexdashboard::flex_dashboard:
+    storyboard: true
+    theme: spacelab
+runtime: shiny
+---
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+library(shiny)
+library(leaflet)
+library(RColorBrewer)
+library(ggplot2)
+require(dplyr)
+library(gtools)
+library(urltools)
+require(article)
+options(warn = -1)
+
+file_name <- paste("GKGCountWeekly", Sys.Date() -1, ".csv", sep = "" )
+  day_array <- array()
+
+if (!file.exists(file_name)){
+count <- 1
+for(i in 1:7){
+  
+  days <- Sys.Date() - i 
+  days <- gsub("-","", days)
+  
+  country_codes <- c("GT","SV","GP","PA","PR","GY","CO","EC","PY","SR","UY","VE","PE","SR","GF","FK","CL", "BR", "AR", "CU","CR","BB","BS","AW","AI","HN")
+
+gkgurl <- paste("http://data.gdeltproject.org/gkg/" , ".gkgcounts.csv.zip" , sep = days)
+
+download.file(gkgurl, dest = "dataset2.zip", mode = "wb")
+unzip("dataset2.zip", exdir = "./")
+unlink("dataset2.zip")
+gkgurl <- gsub("http://data.gdeltproject.org/gkg/", "" , gkgurl)
+gkgurl <- gsub(".zip", "" , gkgurl)
+
+  
+  if (count == 1){
+    gkg <- read.csv( gkgurl , sep = "\t", header = TRUE, as.is = TRUE, na.strings = "NA")
+
+    central_south_gdelt <- dplyr::filter(gkg, GEO_COUNTRYCODE %in% country_codes)
+    central_south_gdelt <- central_south_gdelt[!duplicated(central_south_gdelt$SOURCEURLS),]
+    unique_gdelt <- unique(central_south_gdelt$SOURCEURLS)
+
+
+    } else{
+    gkg2 <- read.csv( gkgurl , sep = "\t", header = TRUE, as.is = TRUE, na.strings = "NA")
+
+    central_south_gdelt2 <- dplyr::filter(gkg2, GEO_COUNTRYCODE %in% country_codes)
+    central_south_gdelt2 <- central_south_gdelt2[!duplicated(central_south_gdelt2$SOURCEURLS),]
+    unique_gdelt2 <- unique(central_south_gdelt2$SOURCEURLS)
+
+    }
+  if (count == 1){
+    central_south_gdelt_final <- central_south_gdelt
+    rm(central_south_gdelt)
+    rm(gkg)
+  }else{
+    central_south_gdelt_final <- rbind(central_south_gdelt_final, central_south_gdelt2 )
+    rm(central_south_gdelt2)
+    rm(gkg2)
+  }
+
+  if (file.exists(gkgurl)) file.remove(gkgurl)
+  count <- count + 1
+
+}
+
+central_south_gdelt_final <- central_south_gdelt_final[!duplicated(central_south_gdelt_final$SOURCEURLS),]
+
+
+
+write.csv(central_south_gdelt_final, file = file_name)
+
+} else{
+  central_south_gdelt_final <- read.csv(file_name, as.is = TRUE)
+}
+
+
+
+```
+
+MAP
+=================================================================
+
+```{r}
+
+
+  for(i in 0:nrow(central_south_gdelt_final)){
+    if ("GT" %in% central_south_gdelt_final$GEO_COUNTRYCODE[i]){
+      central_south_gdelt_final$GEO_COUNTRYCODE[i] <- "Guatemala"
+    } else if ("SV" %in% central_south_gdelt_final$GEO_COUNTRYCODE[i]){
+      central_south_gdelt_final$GEO_COUNTRYCODE[i] <- "El Salvador"
+    } else if ("GP" %in% central_south_gdelt_final$GEO_COUNTRYCODE[i]){
+      central_south_gdelt_final$GEO_COUNTRYCODE[i] <- "Guadeloupe"
+    } else if ("PA" %in% central_south_gdelt_final$GEO_COUNTRYCODE[i]){
+      central_south_gdelt_final$GEO_COUNTRYCODE[i] <- "Panama"
+    } else if ("PR" %in% central_south_gdelt_final$GEO_COUNTRYCODE[i]){
+      central_south_gdelt_final$GEO_COUNTRYCODE[i] <- "Puerto Rico"
+    } else if ("GY" %in% central_south_gdelt_final$GEO_COUNTRYCODE[i]){
+      central_south_gdelt_final$GEO_COUNTRYCODE[i] <- "Guyana"
+    } else if ("CO" %in% central_south_gdelt_final$GEO_COUNTRYCODE[i]){
+      central_south_gdelt_final$GEO_COUNTRYCODE[i] <- "Colombia"
+    } else if ("EC" %in% central_south_gdelt_final$GEO_COUNTRYCODE[i]){
+      central_south_gdelt_final$GEO_COUNTRYCODE[i] <- "Ecuador"
+    } else if ("PY" %in% central_south_gdelt_final$GEO_COUNTRYCODE[i]){
+      central_south_gdelt_final$GEO_COUNTRYCODE[i] <- "Paraguay"
+    } else if ("SR" %in% central_south_gdelt_final$GEO_COUNTRYCODE[i]){
+      central_south_gdelt_final$GEO_COUNTRYCODE[i] <- "Suriname"
+    } else if ("UY" %in% central_south_gdelt_final$GEO_COUNTRYCODE[i]){
+      central_south_gdelt_final$GEO_COUNTRYCODE[i] <- "Uruguay"
+    } else if ("VE" %in% central_south_gdelt_final$GEO_COUNTRYCODE[i]){
+      central_south_gdelt_final$GEO_COUNTRYCODE[i] <- "Venezuela"
+    } else if ("PE" %in% central_south_gdelt_final$GEO_COUNTRYCODE[i]){
+      central_south_gdelt_final$GEO_COUNTRYCODE[i] <- "Peru"
+    } else if ("GF" %in% central_south_gdelt_final$GEO_COUNTRYCODE[i]){
+      central_south_gdelt_final$GEO_COUNTRYCODE[i] <- "French Guiana"
+    } else if ("FK" %in% central_south_gdelt_final$GEO_COUNTRYCODE[i]){
+      central_south_gdelt_final$GEO_COUNTRYCODE[i] <- "Falkland Islands"
+    } else if ("CL" %in% central_south_gdelt_final$GEO_COUNTRYCODE[i]){
+      central_south_gdelt_final$GEO_COUNTRYCODE[i] <- "Chile"
+    } else if ("BR" %in% central_south_gdelt_final$GEO_COUNTRYCODE[i]){
+      central_south_gdelt_final$GEO_COUNTRYCODE[i] <- "Brazil"
+    } else if ("AR" %in% central_south_gdelt_final$GEO_COUNTRYCODE[i]){
+      central_south_gdelt_final$GEO_COUNTRYCODE[i] <- "Argentina"
+    } else if ("CU" %in% central_south_gdelt_final$GEO_COUNTRYCODE[i]){
+      central_south_gdelt_final$GEO_COUNTRYCODE[i] <- "Cuba"
+    } else if ("CR" %in% central_south_gdelt_final$GEO_COUNTRYCODE[i]){
+      central_south_gdelt_final$GEO_COUNTRYCODE[i] <- "Costa Rica"
+    } else if ("BB" %in% central_south_gdelt_final$GEO_COUNTRYCODE[i]){
+      central_south_gdelt_final$GEO_COUNTRYCODE[i] <- "Barbados"
+    } else if ("BS" %in% central_south_gdelt_final$GEO_COUNTRYCODE[i]){
+      central_south_gdelt_final$GEO_COUNTRYCODE[i] <- "Bahamas"
+    } else if ("AW" %in% central_south_gdelt_final$GEO_COUNTRYCODE[i]){
+      central_south_gdelt_final$GEO_COUNTRYCODE[i] <- "Aruba"
+    } else if ("AI" %in% central_south_gdelt_final$GEO_COUNTRYCODE[i]){
+      central_south_gdelt_final$GEO_COUNTRYCODE[i] <- "Anguilla"
+    } else if ("HN" %in% central_south_gdelt_final$GEO_COUNTRYCODE[i]){
+      central_south_gdelt_final$GEO_COUNTRYCODE[i] <- "Honduras"
+    }
+  }
+
+
+
+
+ui <- bootstrapPage(
+  tags$style(type = "text/css", "html, body {width:100%;height:100%}"),
+  leafletOutput("map", width = "100%", height = "100%"),
+  absolutePanel(top =10, right = 10, 
+                selectInput("ecode", strong("Count Type"), c("All", unique(as.character(mixedsort(central_south_gdelt_final$COUNTTYPE))))),
+                selectInput("country", strong("Country"), c("All", unique(as.character(central_south_gdelt_final$GEO_COUNTRYCODE)))),
+                selectInput("date", strong("Date"), c("All", unique(as.character(central_south_gdelt_final$DATE)))),
+
+                selectInput("action", strong("Action"), c("View", "Scrape")),
+                submitButton("update")
+))
+
+
+server <- function(input, output, session){
+  eventInput <- eventReactive( input$submit, {
+    input$caption
+  })
+  output$map <- renderLeaflet({
+    if (input$ecode == "All"){
+      central_south_gdelt_final <- central_south_gdelt_final
+    }else{
+      central_south_gdelt_final <- subset(central_south_gdelt_final, COUNTTYPE == input$ecode)
+    }
+    if(input$country == "All"){
+      central_south_gdelt_final <- central_south_gdelt_final
+    } else{
+      central_south_gdelt_final <- subset(central_south_gdelt_final, GEO_COUNTRYCODE == input$country)
+    }  
+    if(input$date == "All"){
+      central_south_gdelt_final <- central_south_gdelt_final
+    } else{
+      central_south_gdelt_final <- subset(central_south_gdelt_final, DATE == input$date)
+    }
+    
+    if(input$action == "Scrape"){
+      uniqueArticles <- unique(central_south_gdelt_final$SOURCEURLS)
+      articles <- get_article(uniqueArticles)
+      central_south_gdelt_final <- left_join(central_south_gdelt_final, articles, by = c("SOURCEURLS" = "url"))
+      content <- paste(sep = "",
+                 "<b>Title: </b>",
+                 central_south_gdelt_final$title, "<br/>",
+                 "<b>Summary: </b>", "<br/>",
+                 central_south_gdelt_final$text , "<br/>",
+                 "<b>URL: </b>", "<br/>",
+                 central_south_gdelt_final$SOURCEURLS, "<br/> ")
+    }else{
+          content <- paste(sep = "",
+                 central_south_gdelt_final$SOURCEURLS, "<br/> ")
+
+    }
+
+    central_south_gdelt_final <- central_south_gdelt_final[!duplicated(central_south_gdelt_final$SOURCEURLS),]
+
+    leaflet(central_south_gdelt_final) %>%
+        setView(lng = -60.2333, lat =-15.9000 , zoom = 3)
+  })
+  
+  observe({
+    if (input$ecode == "All"){
+      central_south_gdelt_final <- central_south_gdelt_final
+    }else{
+      central_south_gdelt_final <- subset(central_south_gdelt_final, COUNTTYPE == input$ecode)
+    }
+
+    if(input$country == "All"){
+      central_south_gdelt_final <- central_south_gdelt_final
+    } else{
+      central_south_gdelt_final <- subset(central_south_gdelt_final, GEO_COUNTRYCODE == input$country)
+    }
+    if(input$date == "All"){
+      central_south_gdelt_final <- central_south_gdelt_final
+    } else{
+      central_south_gdelt_final <- subset(central_south_gdelt_final, DATE == input$date)
+    }
+
+    if(input$action == "Scrape"){
+      uniqueArticles <- unique(central_south_gdelt_final$SOURCEURLS)
+      articles <- get_article(uniqueArticles)
+      central_south_gdelt_final <- left_join(central_south_gdelt_final, articles, by = c("SOURCEURLS" = "url"))
+      content <- paste(sep = "",
+                 "<b>Title: </b>",
+                 central_south_gdelt_final$title, "<br/>",
+                 "<b>Summary: </b>", "<br/>",
+                 central_south_gdelt_final$text , "<br/>",
+                 "<b>URL: </b>", "<br/>",
+                 central_south_gdelt_final$SOURCEURLS, "<br/> ")
+    }else{
+          content <- paste(sep = "",
+                 central_south_gdelt_final$SOURCEURLS, "<br/> ")
+
+    }
+  
+
+
+    leafletProxy("map", data = central_south_gdelt_final) %>%
+                   addTiles() %>%
+                   addCircleMarkers(~jitter(GEO_LONG), ~jitter(GEO_LAT),radius = 2 ,
+                                    fillOpacity = 0.7,
+                                    popup = content,
+                                    popupOptions = list(minWidth = 300,maxHeight = 300))
+
+    
+    
+})
+}
+  
+  
+
+shinyApp(ui, server)
+
+```
+
+RAW DATA
+===============================================================
+
+```{r}
+
+temp <- central_south_gdelt_final[,!(names(central_south_gdelt_final)) %in% "CAMEOEVENTIDS"]
+temp <- temp[,!(names(temp)) %in% "X"]
+temp <- temp[,!(names(temp)) %in% "SOURCES"]
+temp <- temp[,!(names(temp)) %in% "SOURCEURLS"]
+
+ui <- fluidPage(
+  titlePanel("DataTable"),
+  fluidRow(
+    DT:: dataTableOutput("table")
+  )
+)
+
+server <- function(input, output){
+  output$table <- DT:: renderDataTable(DT:: datatable({
+    data <- temp
+  }))
+}
+
+shinyApp(ui, server)
+
+```
+
+
+
+<!-- STATISTICAL DATA{.storyboard } -->
+<!-- =================================================== -->
+
+
+<!-- ### Quad Class Analysis -->
+
+<!-- ```{r gdelt statistics, echo = FALSE} -->
+<!-- quad <- central_south_gdelt_final -->
+<!--   for(i in 0:nrow(quad)){ -->
+<!--     if (4 %in% quad$QuadClass[i]){ -->
+<!--       quad$QuadClass[i] <- "4 Material Conflict" -->
+<!--     } else if (3 %in% quad$QuadClass[i]){ -->
+<!--       quad$QuadClass[i] <- "3 Verbal Conflict" -->
+<!--     } else if (2 %in% quad$QuadClass[i]){ -->
+<!--       quad$QuadClass[i] <- "2 Material Cooperation" -->
+<!--     } else if (1 %in% quad$QuadClass[i]){ -->
+<!--       quad$QuadClass[i] <- "1 Verbal Cooperation" -->
+<!--    } -->
+<!--   } -->
+
+<!--   ggplot(data = quad, aes( x = QuadClass)) + geom_bar(fill = "lightblue", color= "darkblue", width = .5) +  -->
+<!--   xlab("Quad Class of the Events") +  -->
+<!--   theme(axis.title.y = element_blank()) + ggtitle("Number of Events by Quad Class") -->
+
+
+
+
+<!-- ``` -->
+
+
+
+<!-- *** -->
+
+<!-- **QuadClass** : The entire CAMEO event taxonomy is ultimately organized under four primary classifications: Verbal Cooperation, Material Cooperation, Verbal Conflict, and Material Conflict. This field specifies this primary classification for the event type, allowing analysis at the highest level of aggregation. The numeric codes in this field map to the Quad Classes as follows: 1=Verbal Cooperation, 2=Material Cooperation, 3=Verbal Conflict, 4=Material Conflict. -->
+
+<!-- ### Quad Class Article Tone -->
+
+<!-- ```{r, echo = FALSE} -->
+
+<!--   quadTone <- summarise (group_by(quad, QuadClass) , meanTone =   mean(AvgTone)) -->
+<!--   ggplot(quadTone, aes(x = QuadClass, y = meanTone)) +   -->
+<!--   geom_bar(stat = "identity", width = .5) + -->
+<!--   xlab("Quad Class of the Events") -->
+<!-- ``` -->
+
+<!-- *** -->
+
+<!-- **AvgTone** : This is the average “tone” of all documents containing one or morementions of  this  eventduring  the  15  minute  up date  in  which  it  was  first  seen.The  score ranges  from -100  (extremely  negative)  to  +100  (extremely positive).Common  values range between -10  and  +10,  with  0  indicating  neutral.    This  can be  used  as  a  method  of  filtering  the “context” of events as a subtle  measure  of  the  importance  of  an  event  and  as  a  proxy  for the “impact” of that event.  For example, a riot event with a slightly negative average tone is likely to  have  been  a  minor  occurrence,  whereas  if  it  had  an  extremely  negative  average  tone,  it suggests a far more serious occurrence.  A riot with a positive score likely suggests a very minor occurrence  described in the context of a more  positive  narrative  (such as a report of an attack occurring  in  a  discussion  of  improving  conditions  on  the  ground in  a  country  and how  the number  of  attacks  per  day  has  been  greatly  reduced).NOTE: this  field  refers  only  to  the  first news report to mention an event and is not updated if the event is found in a different context in other news reports.  It is included for legacy purposes –for more precise information on the positioning  of  an  event,  see  the  Mentions  table.NOTE:this  provides  only  a  basic  tonal assessment of an article and it is recommended that users interested in emotional measures use the Mentions and Global Knowledge Graph tables to merge the complete set of 2,300 emotions and themes from the GKG GCAM system into their analysis of event records. -->
+
+
+<!-- ### Event Root Code Analysis -->
+
+<!-- ```{r , echo =FALSE} -->
+<!-- central_south_gdelt_final$EventBaseCode <- as.factor(central_south_gdelt_final$EventBaseCode) -->
+
+<!--   ggplot(central_south_gdelt_final, aes(x = EventRootCode)) + -->
+<!--   geom_bar(fill = "blue", colour = "black", width = .5) + -->
+<!--   theme(axis.text.x = element_text(angle = 90, hjust = .5, vjust = .5)) + -->
+<!--   xlab("Event Code") + -->
+<!--   theme(axis.title.y = element_blank())+ -->
+<!--   ggtitle("Number of Events by Event Code ") -->
+
+<!-- ``` -->
+
+
+<!-- *** -->
+
+<!-- **EventRootCode**: CAMEO event codes are defined in a three-level taxonomy. For events at level three in the taxonomy, this yields its level two leaf root node. For example, code “0251” (“Appeal for easing of administrative sanctions”) would yield an EventBaseCode of “025” (“Appeal to yield”). This makes it possible to aggregate events at various resolutions of specificity. For events at levels two or one, this field will be set to EventCode. NOTE: it is strongly recommended that this field be stored as a string instead of an integer, since the CAMEO taxonomy can include zero-leaded event codes that can make distinguishing between certain event types more difficult when stored as an integer. -->
+
+<!-- * 01	MAKE PUBLIC STATEMENT -->
+<!-- * 02	APPEAL -->
+<!-- * 03	EXPRESS INTENT TO COOPERATE -->
+<!-- * 04	CONSULT -->
+<!-- * 05	ENGAGE IN DIPLOMATIC COOPERATION -->
+<!-- * 06	ENGAGE IN MATERIAL COOPERATION -->
+<!-- * 07	PROVIDE AID -->
+<!-- * 08	YIELD -->
+<!-- * 09	INVESTIGATE -->
+<!-- * 10	DEMAND -->
+<!-- * 11	DISAPPROVE -->
+<!-- * 12	REJECT -->
+<!-- * 13	THREATEN -->
+<!-- * 14	PROTEST -->
+<!-- * 15	EXHIBIT FORCE POSTURE -->
+<!-- * 16	REDUCE RELATIONS -->
+<!-- * 17	COERCE -->
+<!-- * 18	ASSAULT -->
+<!-- * 19	FIGHT -->
+<!-- * 20  USE UNCONVENTIONAL MASS VIOLENCE -->
+<!-- *** -->
+
+<!-- ### Country Code -->
+
+
+<!-- ```{r ActionGeo_CountryCode, echo = FALSE} -->
+<!-- stat <- central_south_gdelt_final -->
+<!--   stat$ActionGeo_CountryCode <- as.factor(stat$ActionGeo_CountryCode) -->
+
+<!--   ggplot(stat, aes(x = ActionGeo_CountryCode)) + -->
+<!--   geom_bar(fill = "blue", colour = "black", width = .5) + -->
+<!--   theme(axis.text.x = element_text(angle = 90, hjust = .5, vjust = .5)) + -->
+<!--   xlab("Country Code") + -->
+<!--   theme(axis.title.y = element_blank()) + -->
+<!--   ggtitle("Number of Events by Country Code ") -->
+
+
+<!-- ``` -->
+
+<!-- *** -->
+
+<!-- **Country Code**: (string) This is the 2-character FIPS10-4 country code for the location. -->
+
+
